@@ -78,10 +78,10 @@ app.post('/api/login', async (req, res) => {
       return res.status(400).json({ error: 'Invalid credentials' });
     }
     console.log('Login successful:', { email, role: user.role, school: user.school });
-    res.json({
+    res.status(200).json({
       userId: user._id.toString(),
       role: user.role,
-      school: user.school.toString(), // Ensure ObjectId is a string
+      school: user.school.toString(),
     });
   } catch (error) {
     console.error('Login error:', error.message, error.stack);

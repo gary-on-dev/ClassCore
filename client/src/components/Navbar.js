@@ -19,15 +19,12 @@ function Navbar() {
       </div>
       <div>
         {user ? (
-          <>
-            <span style={{ marginRight: '20px' }}>Welcome, {user.email}</span>
-            <button
-              onClick={handleLogout}
-              style={{ background: 'red', color: 'white', border: 'none', padding: '5px 10px', cursor: 'pointer' }}
-            >
-              Logout
-            </button>
-          </>
+          <button
+            onClick={handleLogout}
+            style={{ background: 'red', color: 'white', border: 'none', padding: '5px 10px', cursor: 'pointer' }}
+          >
+            Logout
+          </button>
         ) : (
           <Link to="/login" style={{ color: 'white', textDecoration: 'none' }}>Login</Link>
         )}
