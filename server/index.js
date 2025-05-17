@@ -56,6 +56,12 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK' });
 });
 
+app.get('/api/auth/check', (req, res) => {
+  console.log('Checking auth status');
+  // For now, return null (no session management yet)
+  res.status(200).json(null);
+});
+
 // Login Route
 app.post('/api/login', async (req, res) => {
   try {
@@ -162,37 +168,38 @@ app.post('/api/reports', async (req, res) => {
 app.post('/api/users', async (req, res) => {
   try {
     const { email, password, role, school } = req.body;
-    console.log('Adding user:', { email, role, school });
+    console.log('Adding user - Received payload:', { email, password, role, school });
     if (!email || !password || !role || !school) {
-      console.log('Validation failed: Missing required fields');
+      console.log('Validation failed: Missing required fields', { email, password, role, school });
       return res.status(400).json({ error: 'Email, password, role, and school are required' });
     }
     if (!['teacher', 'parent', 'student', 'admin'].includes(role)) {
-      console.log('Validation failed: Invalid role', role);
+      console.log('Validation failed: Invalid role', { role });
       return res.status(400).json({ error: 'Invalid role' });
     }
     if (!mongoose.Types.ObjectId.isValid(school)) {
-      console.log('Validation failed: Invalid school ID', school);
+      console.log('Validation failed: Invalid school ID', { school });
       return res.status(400).json({ error: 'Invalid school ID' });
     }
     const schoolExists = await School.findById(school);
     if (!schoolExists) {
-      console.log('School not found:', school);
+      console.log('School not found:', { school });
       return res.status(400).json({ error: 'School not found' });
     }
     const userExists = await User.findOne({ email });
     if (userExists) {
-      console.log('User already exists:', email);
+      console.log('User already exists:', { email });
       return res.status(400).json({ error: 'User already exists' });
     }
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = new User({ email, password: hashedPassword, role, school });
     const savedUser = await user.save();
     console.log('User saved successfully:', savedUser);
-    res.json({ message: 'User added', user: savedUser });
+    console.log('Sending response: { message: "User added", user }');
+    return res.status(200).json({ message: 'User added', user: savedUser });
   } catch (error) {
     console.error('Add user error:', error.message, error.stack);
-    res.status(500).json({ error: 'Server error', details: error.message });
+    return res.status(500).json({ error: 'Server error', details: error.message });
   }
 });
 
@@ -200,38 +207,46 @@ app.post('/api/users', async (req, res) => {
 app.post('/api/announcements', async (req, res) => {
   try {
     const { title, content, school } = req.body;
-    console.log('Adding announcement:', { title, content, school });
+    console.log('Adding announcement - Received payload:', { title, content, school });
     if (!title || !content || !school) {
-      console.log('Validation failed: Missing required fields');
+      console.log('Validation failed: Missing required fields', { title, content, school });
       return res.status(400).json({ error: 'Title, content, and school are required' });
     }
     if (!mongoose.Types.ObjectId.isValid(school)) {
-      console.log('Validation failed: Invalid school ID', school);
+      console.log('Validation failed: Invalid school ID', { school });
       return res.status(400).json({ error: 'Invalid school ID' });
     }
     const schoolExists = await School.findById(school);
     if (!schoolExists) {
-      console.log('School not found:', school);
+      console.log('School not found:', { school });
       return res.status(400).json({ error: 'School not found' });
     }
     const announcement = new Announcement({ title, content, school });
     const savedAnnouncement = await announcement.save();
     console.log('Announcement saved successfully:', savedAnnouncement);
-    res.json({ message: 'Announcement added', announcement: savedAnnouncement });
+    console.log('Sending response: { message: "Announcement added", announcement }');
+    return res.status(200).json({ message: 'Announcement added', announcement: savedAnnouncement });
   } catch (error) {
     console.error('Add announcement error:', error.message, error.stack);
-    res.status(500).json({ error: 'Server error', details: error.message });
+    return res.status(500).json({ error: 'Server error', details: error.message });
   }
 });
 
 // Get Announcements
 app.get('/api/announcements', async (req, res) => {
   try {
-    const announcements = await Announcement.find().sort({ createdAt: -1 });
-    res.json(announcements);
+    const school = req.query.school || '6826c6741e8bb0ac59a1bea9'; // Default school if not provided
+    console.log('Fetching announcements for school:', school);
+    if (!mongoose.Types.ObjectId.isValid(school)) {
+      console.log('Invalid school ID:', school);
+      return res.status(400).json({ error: 'Invalid school ID' });
+    }
+    const announcements = await Announcement.find({ school }).sort({ createdAt: -1 });
+    console.log('Announcements fetched:', announcements.length);
+    return res.status(200).json(announcements);
   } catch (error) {
-    console.error('Get announcements error:', error);
-    res.status(500).json({ error: 'Server error' });
+    console.error('Fetch announcements error:', error.message, error.stack);
+    return res.status(500).json({ error: 'Server error', details: error.message });
   }
 });
 
