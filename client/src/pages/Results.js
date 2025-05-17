@@ -5,15 +5,8 @@ import axios from 'axios';
 function Results() {
   const { user } = useContext(AuthContext);
   const [results, setResults] = useState([]);
+  const [subjects, setSubjects] = useState([]);
   const [error, setError] = useState('');
-  const [form, setForm] = useState({
-    student: '',
-    type: 'exam',
-    subject: '',
-    score: '',
-    attendance: 'present',
-    comment: '',
-  });
 
   useEffect(() => {
     const fetchResults = async () => {
@@ -26,10 +19,9 @@ function Results() {
         console.log('Fetching results:', params);
         const response = await axios.get('http://localhost:5000/api/results', { params });
         console.log('Results received:', response.data);
-
-        // Calculate rankings and aggregates
         const aggregatedResults = aggregateResults(response.data);
-        setResults(aggregatedResults);
+        setResults(aggregatedResults.results);
+        setSubjects(aggregatedResults.subjects);
       } catch (error) {
         console.error('Fetch results error:', error);
         setError(error.response?.data?.error || 'Failed to load results');
@@ -38,10 +30,22 @@ function Results() {
     fetchResults();
   }, [user]);
 
+  // Calculate grade based on score
+  const getGrade = (average, missed, cheated) => {
+    if (missed) return 'Z';
+    if (cheated) return 'Y';
+    if (average >= 80) return 'A';
+    if (average >= 70) return 'B';
+    if (average >= 60) return 'C';
+    if (average >= 50) return 'D';
+    return 'E';
+  };
+
   // Aggregate results for display
   const aggregateResults = (rawResults) => {
-    // Group by student
     const studentMap = {};
+    const subjectSet = new Set();
+
     rawResults.forEach((result) => {
       const studentId = result.student._id;
       if (!studentMap[studentId]) {
@@ -50,65 +54,54 @@ function Results() {
           subjects: {},
           totalScore: 0,
           count: 0,
+          attendance: '',
+          comment: '',
+          missed: false,
+          cheated: false,
         };
       }
       if (result.type === 'exam' || result.type === 'cat') {
         studentMap[studentId].subjects[result.subject] = result.score;
         studentMap[studentId].totalScore += result.score || 0;
         studentMap[studentId].count += 1;
+        subjectSet.add(result.subject);
       } else if (result.type === 'attendance') {
         studentMap[studentId].attendance = result.attendance;
+        if (result.attendance === 'absent') {
+          studentMap[studentId].missed = true;
+        }
       } else if (result.type === 'comment') {
         studentMap[studentId].comment = result.comment;
+        if (result.comment.toLowerCase().includes('cheat')) {
+          studentMap[studentId].cheated = true;
+        }
       }
     });
 
-    // Convert to array and calculate averages
     const aggregated = Object.values(studentMap).map((student) => ({
       ...student,
-      average: student.count > 0 ? (student.totalScore / student.count).toFixed(2) : 0,
+      total: student.totalScore,
+      average: student.count > 0 ? student.totalScore / student.count : 0,
+      grade: getGrade(
+        student.count > 0 ? student.totalScore / student.count : 0,
+        student.missed,
+        student.cheated
+      ),
     }));
 
-    // Sort by average for ranking
-    aggregated.sort((a, b) => b.average - a.average);
+    // Sort by grade and average
+    aggregated.sort((a, b) => {
+      const gradeOrder = { A: 5, B: 4, C: 3, D: 2, E: 1, Z: 0, Y: -1 };
+      return gradeOrder[b.grade] - gradeOrder[a.grade] || b.average - a.average;
+    });
 
-    // Add rank
-    return aggregated.map((student, index) => ({
-      ...student,
-      rank: index + 1,
-    }));
-  };
-
-  const handleInputChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = async () => {
-    try {
-      setError('');
-      const payload = {
-        student: form.student,
-        type: form.type,
-        subject: form.type === 'exam' || form.type === 'cat' ? form.subject : undefined,
-        score: form.type === 'exam' || form.type === 'cat' ? parseFloat(form.score) : undefined,
-        attendance: form.type === 'attendance' ? form.attendance : undefined,
-        comment: form.type === 'comment' ? form.comment : undefined,
-        school: user?.school || '6826c6741e8bb0ac59a1bea9',
-      };
-      console.log('Submitting result:', payload);
-      const response = await axios.post('http://localhost:5000/api/results', payload);
-      console.log('Result added:', response.data);
-      alert('Result added successfully');
-      setForm({ student: '', type: 'exam', subject: '', score: '', attendance: 'present', comment: '' });
-      // Refresh results
-      const resultsResponse = await axios.get('http://localhost:5000/api/results', {
-        params: { school: user?.school || '6826c6741e8bb0ac59a1bea9' },
-      });
-      setResults(aggregateResults(resultsResponse.data));
-    } catch (error) {
-      console.error('Add result error:', error);
-      setError(error.response?.data?.error || 'Failed to add result');
-    }
+    return {
+      results: aggregated.map((student, index) => ({
+        ...student,
+        rank: index + 1,
+      })),
+      subjects: Array.from(subjectSet).sort(),
+    };
   };
 
   if (!user) {
@@ -119,58 +112,6 @@ function Results() {
     <div className="page-container">
       <h1>Results</h1>
       {error && <p className="error">{error}</p>}
-      {user.role === 'teacher' && (
-        <div className="form-container">
-          <h3>Add Result</h3>
-          <input
-            type="text"
-            name="student"
-            value={form.student}
-            onChange={handleInputChange}
-            placeholder="Student ID"
-          />
-          <select name="type" value={form.type} onChange={handleInputChange}>
-            <option value="exam">Exam</option>
-            <option value="cat">CAT</option>
-            <option value="attendance">Attendance</option>
-            <option value="comment">Comment</option>
-          </select>
-          {(form.type === 'exam' || form.type === 'cat') && (
-            <>
-              <input
-                type="text"
-                name="subject"
-                value={form.subject}
-                onChange={handleInputChange}
-                placeholder="Subject (e.g., Math)"
-              />
-              <input
-                type="number"
-                name="score"
-                value={form.score}
-                onChange={handleInputChange}
-                placeholder="Score (0-100)"
-              />
-            </>
-          )}
-          {form.type === 'attendance' && (
-            <select name="attendance" value={form.attendance} onChange={handleInputChange}>
-              <option value="present">Present</option>
-              <option value="absent">Absent</option>
-              <option value="excused">Excused</option>
-            </select>
-          )}
-          {form.type === 'comment' && (
-            <textarea
-              name="comment"
-              value={form.comment}
-              onChange={handleInputChange}
-              placeholder="Comment"
-            />
-          )}
-          <button onClick={handleSubmit}>Add Result</button>
-        </div>
-      )}
       {results.length === 0 ? (
         <p>No results available</p>
       ) : (
@@ -179,8 +120,11 @@ function Results() {
             <tr>
               <th>Rank</th>
               <th>Student</th>
-              <th>Subjects</th>
-              <th>Average</th>
+              {subjects.map((subject) => (
+                <th key={subject}>{subject}</th>
+              ))}
+              <th>Total</th>
+              <th>Grade</th>
               <th>Attendance</th>
               <th>Comment</th>
             </tr>
@@ -190,12 +134,11 @@ function Results() {
               <tr key={result.student}>
                 <td>{result.rank}</td>
                 <td>{result.student}</td>
-                <td>
-                  {Object.entries(result.subjects).map(([subject, score]) => (
-                    <div key={subject}>{`${subject}: ${score}`}</div>
-                  ))}
-                </td>
-                <td>{result.average}</td>
+                {subjects.map((subject) => (
+                  <td key={subject}>{result.subjects[subject] || '-'}</td>
+                ))}
+                <td>{result.total}</td>
+                <td>{result.grade}</td>
                 <td>{result.attendance || '-'}</td>
                 <td>{result.comment || '-'}</td>
               </tr>

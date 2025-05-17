@@ -16,7 +16,8 @@ function Announcements() {
           params: { school },
         });
         console.log('Announcements received:', response.data);
-        setAnnouncements(response.data);
+        const sortedAnnouncements = response.data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        setAnnouncements(sortedAnnouncements);
       } catch (error) {
         console.error('Fetch announcements error:', error);
         setError(error.response?.data?.error || 'Failed to load announcements');
@@ -33,8 +34,11 @@ function Announcements() {
         <p>No announcements available</p>
       ) : (
         <div>
-          {announcements.map((announcement) => (
-            <div key={announcement._id} className="announcement-card">
+          {announcements.map((announcement, index) => (
+            <div
+              key={announcement._id}
+              className={index === 0 ? 'announcement-banner' : 'announcement-card'}
+            >
               <h3>{announcement.title}</h3>
               <p>{announcement.content}</p>
               <p>Posted: {new Date(announcement.createdAt).toLocaleDateString()}</p>
