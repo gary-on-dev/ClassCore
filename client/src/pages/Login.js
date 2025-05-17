@@ -14,7 +14,6 @@ function Login() {
       setError('');
       const user = await login(email, password);
       console.log('Login successful:', user);
-      // Redirect based on role
       switch (user.role) {
         case 'admin':
           navigate('/admin');
@@ -23,10 +22,10 @@ function Login() {
           navigate('/teacher');
           break;
         case 'parent':
-          navigate('/parent');
+          navigate('/results');
           break;
         case 'student':
-          navigate('/student');
+          navigate('/results');
           break;
         default:
           navigate('/');
@@ -38,29 +37,24 @@ function Login() {
   };
 
   return (
-    <div style={{ textAlign: 'center', padding: '50px' }}>
-      <h1>Login</h1>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      <input
-        type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        placeholder="Email"
-        style={{ display: 'block', margin: '10px auto', padding: '10px', width: '300px' }}
-      />
-      <input
-        type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        placeholder="Password"
-        style={{ display: 'block', margin: '10px auto', padding: '10px', width: '300px' }}
-      />
-      <button
-        onClick={handleLogin}
-        style={{ padding: '10px 20px', background: 'blue', color: 'white', border: 'none' }}
-      >
-        Login
-      </button>
+    <div className="page-container">
+      <div className="form-container">
+        <h1>Login</h1>
+        {error && <p className="error">{error}</p>}
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Email"
+        />
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Password"
+        />
+        <button onClick={handleLogin}>Login</button>
+      </div>
     </div>
   );
 }

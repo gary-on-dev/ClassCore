@@ -11,22 +11,44 @@ function Navbar() {
     navigate('/login');
   };
 
+  const getDashboardPath = () => {
+    if (!user) return null;
+    switch (user.role) {
+      case 'admin': return '/admin';
+      case 'teacher': return '/teacher';
+      case 'parent': return '/results';
+      case 'student': return '/results';
+      default: return '/';
+    }
+  };
+
+  const getDashboardLabel = () => {
+    if (!user) return null;
+    switch (user.role) {
+      case 'admin': return 'Admin Dashboard';
+      case 'teacher': return 'Teacher Dashboard';
+      case 'parent': return 'Results';
+      case 'student': return 'Results';
+      default: return 'Dashboard';
+    }
+  };
+
   return (
-    <nav style={{ background: '#333', color: 'white', padding: '10px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <nav>
       <div>
-        <Link to="/" style={{ color: 'white', marginRight: '20px', textDecoration: 'none' }}>Home</Link>
-        <Link to="/announcements" style={{ color: 'white', textDecoration: 'none' }}>Announcements</Link>
+        <Link to="/">Home</Link>
+        <Link to="/announcements">Announcements</Link>
+        {user && (
+          <Link to={getDashboardPath()}>
+            {getDashboardLabel()}
+          </Link>
+        )}
       </div>
       <div>
         {user ? (
-          <button
-            onClick={handleLogout}
-            style={{ background: 'red', color: 'white', border: 'none', padding: '5px 10px', cursor: 'pointer' }}
-          >
-            Logout
-          </button>
+          <button onClick={handleLogout}>Logout</button>
         ) : (
-          <Link to="/login" style={{ color: 'white', textDecoration: 'none' }}>Login</Link>
+          <Link to="/login">Login</Link>
         )}
       </div>
     </nav>

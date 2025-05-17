@@ -18,18 +18,7 @@ function Notification({ duration = 3000 }) {
   if (!visible || !user) return null;
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        top: '20px',
-        right: '20px',
-        background: 'green',
-        color: 'white',
-        padding: '10px 20px',
-        borderRadius: '5px',
-        zIndex: 1000,
-      }}
-    >
+    <div className="notification">
       Welcome, {user.email}
     </div>
   );

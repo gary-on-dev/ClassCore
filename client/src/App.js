@@ -6,25 +6,23 @@ import Notification from './components/Notification';
 import Home from './pages/Home';
 import Admin from './pages/Admin';
 import Teacher from './pages/Teacher';
-import Parent from './pages/Parent';
-import Student from './pages/Student';
 import Announcements from './pages/Announcements';
 import Login from './pages/Login';
+import Results from './pages/Results';
 
 function App() {
   return (
     <Router>
       <AuthProvider>
         <Navbar />
-        <Notification /> {/* Moved notification here, will handle user inside */}
+        <Notification />
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/teacher" element={<Teacher />} />
-          <Route path="/parent" element={<Parent />} />
-          <Route path="/student" element={<Student />} />
           <Route path="/announcements" element={<Announcements />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/results" element={<Results />} />
         </Routes>
       </AuthProvider>
     </Router>

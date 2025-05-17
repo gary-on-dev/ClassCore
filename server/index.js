@@ -4,6 +4,8 @@ const dotenv = require('dotenv');
 const bcrypt = require('bcryptjs');
 const cors = require('cors');
 
+const Result = require('./models/Result');
+
 dotenv.config();
 const app = express();
 app.use(cors());
@@ -88,6 +90,47 @@ app.post('/api/login', async (req, res) => {
     res.status(500).json({ error: 'Server error', details: error.message });
   }
 });
+
+
+// Create result (Teacher only)
+app.post('/api/results', async (req, res) => {
+  try {
+    const { student, type, subject, score, attendance, comment, school } = req.body;
+    console.log('Creating result:', { student, type, subject, score, school });
+    if (!mongoose.Types.ObjectId.isValid(student) || !mongoose.Types.ObjectId.isValid(school)) {
+      return res.status(400).json({ error: 'Invalid student or school ID' });
+    }
+    const result = new Result({ student, type, subject, score, attendance, comment, school });
+    await result.save();
+    console.log('Result created:', result);
+    res.status(201).json(result);
+  } catch (error) {
+    console.error('Create result error:', error.message, error.stack);
+    res.status(500).json({ error: 'Server error', details: error.message });
+  }
+});
+
+// Get results for a student or school
+app.get('/api/results', async (req, res) => {
+  try {
+    const { student, school } = req.query;
+    console.log('Fetching results:', { student, school });
+    if (!mongoose.Types.ObjectId.isValid(school)) {
+      return res.status(400).json({ error: 'Invalid school ID' });
+    }
+    const query = { school };
+    if (student && mongoose.Types.ObjectId.isValid(student)) {
+      query.student = student;
+    }
+    const results = await Result.find(query).populate('student', 'email');
+    console.log('Results fetched:', results.length);
+    res.status(200).json(results);
+  } catch (error) {
+    console.error('Fetch results error:', error.message, error.stack);
+    res.status(500).json({ error: 'Server error', details: error.message });
+  }
+});
+
 // Get Students
 app.get('/api/students', async (req, res) => {
   try {

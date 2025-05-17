@@ -11,7 +11,7 @@ function Admin() {
   const [announcementContent, setAnnouncementContent] = useState('');
   const [error, setError] = useState('');
 
-  console.log('Admin user context:', user); // Log user object to verify
+  console.log('Admin user context:', user);
 
   const handleAddUser = async () => {
     try {
@@ -20,7 +20,7 @@ function Admin() {
         email: userEmail,
         password: userPassword,
         role: userRole,
-        school: '6826c6741e8bb0ac59a1bea9', // Hardcode correct school ID
+        school: user?.school || '6826c6741e8bb0ac59a1bea9',
       };
       console.log('Adding user - Sending payload:', payload);
       const response = await axios.post('http://localhost:5000/api/users', payload);
@@ -41,7 +41,7 @@ function Admin() {
       const payload = {
         title: announcementTitle,
         content: announcementContent,
-        school: '6826c6741e8bb0ac59a1bea9', // Hardcode correct school ID
+        school: user?.school || '6826c6741e8bb0ac59a1bea9',
       };
       console.log('Adding announcement - Sending payload:', payload);
       const response = await axios.post('http://localhost:5000/api/announcements', payload);
@@ -56,60 +56,46 @@ function Admin() {
   };
 
   return (
-    <div style={{ textAlign: 'center', padding: '50px' }}>
+    <div className="page-container">
       <h1>Admin Dashboard</h1>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      <h3>Add User</h3>
-      <input
-        type="email"
-        value={userEmail}
-        onChange={(e) => setUserEmail(e.target.value)}
-        placeholder="User Email"
-        style={{ display: 'block', margin: '10px auto', padding: '10px', width: '300px' }}
-      />
-      <input
-        type="password"
-        value={userPassword}
-        onChange={(e) => setUserPassword(e.target.value)}
-        placeholder="User Password"
-        style={{ display: 'block', margin: '10px auto', padding: '10px', width: '300px' }}
-      />
-      <select
-        value={userRole}
-        onChange={(e) => setUserRole(e.target.value)}
-        style={{ display: 'block', margin: '10px auto', padding: '10px' }}
-      >
-        <option value="teacher">Teacher</option>
-        <option value="parent">Parent</option>
-        <option value="student">Student</option>
-        <option value="admin">Admin</option>
-      </select>
-      <button
-        onClick={handleAddUser}
-        style={{ padding: '10px 20px', background: 'blue', color: 'white', border: 'none' }}
-      >
-        Add User
-      </button>
-      <h3>Add Announcement</h3>
-      <input
-        type="text"
-        value={announcementTitle}
-        onChange={(e) => setAnnouncementTitle(e.target.value)}
-        placeholder="Announcement Title"
-        style={{ display: 'block', margin: '10px auto', padding: '10px', width: '300px' }}
-      />
-      <textarea
-        value={announcementContent}
-        onChange={(e) => setAnnouncementContent(e.target.value)}
-        placeholder="Announcement Content"
-        style={{ display: 'block', margin: '10px auto', padding: '10px', width: '300px' }}
-      />
-      <button
-        onClick={handleAddAnnouncement}
-        style={{ padding: '10px 20px', background: 'blue', color: 'white', border: 'none' }}
-      >
-        Add Announcement
-      </button>
+      {error && <p className="error">{error}</p>}
+      <div className="form-container">
+        <h3>Add User</h3>
+        <input
+          type="email"
+          value={userEmail}
+          onChange={(e) => setUserEmail(e.target.value)}
+          placeholder="User Email"
+        />
+        <input
+          type="password"
+          value={userPassword}
+          onChange={(e) => setUserPassword(e.target.value)}
+          placeholder="User Password"
+        />
+        <select value={userRole} onChange={(e) => setUserRole(e.target.value)}>
+          <option value="teacher">Teacher</option>
+          <option value="parent">Parent</option>
+          <option value="student">Student</option>
+          <option value="admin">Admin</option>
+        </select>
+        <button onClick={handleAddUser}>Add User</button>
+      </div>
+      <div className="form-container">
+        <h3>Add Announcement</h3>
+        <input
+          type="text"
+          value={announcementTitle}
+          onChange={(e) => setAnnouncementTitle(e.target.value)}
+          placeholder="Announcement Title"
+        />
+        <textarea
+          value={announcementContent}
+          onChange={(e) => setAnnouncementContent(e.target.value)}
+          placeholder="Announcement Content"
+        />
+        <button onClick={handleAddAnnouncement}>Add Announcement</button>
+      </div>
     </div>
   );
 }
