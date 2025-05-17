@@ -1,26 +1,25 @@
-import React, { useState } from 'react';
-import axios from 'axios';
+import React, { useState, useContext } from 'react';
+import { AuthContext } from '../components/Auth';
 
 function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const { login } = useContext(AuthContext);
 
   const handleLogin = async () => {
     try {
-      const response = await axios.post('http://localhost:5000/api/login', {
-        email,
-        password,
-      });
-      console.log('Logged in:', response.data);
-      // TODO: Redirect based on role
+      setError(''); // Clear previous errors
+      await login(email, password);
     } catch (error) {
-      alert('Login failed: ' + error.response.data.error);
+      setError(error.response?.data?.error || 'Login failed. Please try again.');
     }
   };
 
   return (
     <div style={{ textAlign: 'center', padding: '50px' }}>
       <h1>ClassCore Login</h1>
+      {error && <p style={{ color: 'red' }}>{error}</p>}
       <input
         type="email"
         value={email}
