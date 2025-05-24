@@ -1,0 +1,217 @@
+/* Teacher Dashboard Styles */
+.page-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: 'Arial', sans-serif;
+  background-color: #f5f7fa;
+  min-height: 100vh;
+}
+
+h1 {
+  font-size: 2.2rem;
+  color: #2c3e50;
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+h3 {
+  font-size: 1.6rem;
+  color: #34495e;
+  margin-bottom: 15px;
+}
+
+.form-container {
+  background-color: #ffffff;
+  padding: 25px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  margin-bottom: 30px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 1.1rem;
+  color: #34495e;
+  margin-bottom: 8px;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 12px;
+  font-size: 1rem;
+  border: 1px solid #dcdcdc;
+  border-radius: 6px;
+  box-sizing: border-box;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+}
+
+.form-group input:disabled,
+.form-group select:disabled,
+.form-group textarea:disabled {
+  background-color: #f0f0f0;
+  cursor: not-allowed;
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.inline-input {
+  width: 80px;
+  padding: 8px;
+  font-size: 0.9rem;
+  border: 1px solid #dcdcdc;
+  border-radius: 4px;
+  margin-right: 5px;
+}
+
+.inline-input:focus {
+  outline: none;
+  border-color: #3498db;
+}
+
+button {
+  background-color: #3498db;
+  color: #ffffff;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+  margin-right: 10px;
+}
+
+button:hover {
+  background-color: #2980b9;
+  transform: translateY(-2px);
+}
+
+.edit-button {
+  background-color: #f1c40f;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+}
+
+.edit-button:hover {
+  background-color: #e1b307;
+}
+
+.update-button {
+  background-color: #2ecc71;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+}
+
+.update-button:hover {
+  background-color: #27ae60;
+}
+
+.delete-button {
+  background-color: #e74c3c;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+}
+
+.delete-button:hover {
+  background-color: #c0392b;
+}
+
+.cancel-button {
+  background-color: #7f8c8d;
+  padding: 12px 24px;
+  font-size: 1rem;
+}
+
+.cancel-button:hover {
+  background-color: #6c757d;
+}
+
+.error {
+  color: #e74c3c;
+  font-size: 1.1rem;
+  text-align: center;
+  margin-bottom: 20px;
+  background-color: #ffe6e6;
+  padding: 10px;
+  border-radius: 6px;
+}
+
+.results-table {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #ffffff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.results-table th,
+.results-table td {
+  padding: 15px;
+  text-align: left;
+  border-bottom: 1px solid #dcdcdc;
+}
+
+.results-table th {
+  background-color: #3498db;
+  color: #ffffff;
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.results-table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.results-table tr:hover {
+  background-color: #ecf0f1;
+}
+
+.results-table td button {
+  margin: 0 5px;
+}
+
+@media (max-width: 768px) {
+  .page-container {
+    padding: 15px;
+  }
+
+  .results-table {
+    display: block;
+    overflow-x: auto;
+  }
+
+  .results-table th,
+  .results-table td {
+    min-width: 120px;
+  }
+
+  h1 {
+    font-size: 1.8rem;
+  }
+
+  h3 {
+    font-size: 1.4rem;
+  }
+
+  .inline-input {
+    width: 60px;
+  }
+}

@@ -1,13 +1,16 @@
 import React, { useContext } from 'react';
 import { AuthContext } from './Auth';
 import { Link, useNavigate } from 'react-router-dom';
+import './Navbar.css';
 
 function Navbar() {
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const handleLogout = () => {
+    console.log('Logging out user:', user?.email);
     logout();
+    localStorage.removeItem('token');
     navigate('/login');
   };
 
@@ -33,24 +36,37 @@ function Navbar() {
     }
   };
 
+  console.log('Navbar rendering for user:', user?.role, 'Dashboard path:', getDashboardPath());
+
   return (
-    <nav>
-      <div>
+    <nav className="navbar">
+      <div className="navbar-brand">
         <Link to="/">Home</Link>
-        <Link to="/announcements">Announcements</Link>
+      </div>
+      <ul className="navbar-links">
+        <li>
+          <Link to="/announcements">Announcements</Link>
+        </li>
         {user && (
-          <Link to={getDashboardPath()}>
-            {getDashboardLabel()}
-          </Link>
+          <>
+            <li>
+              <Link to={getDashboardPath()}>{getDashboardLabel()}</Link>
+            </li>
+            {user.role === 'admin' && (
+              <li>
+                <Link to="/results">Results</Link>
+              </li>
+            )}
+          </>
         )}
-      </div>
-      <div>
-        {user ? (
-          <button onClick={handleLogout}>Logout</button>
-        ) : (
-          <Link to="/login">Login</Link>
-        )}
-      </div>
+        <li>
+          {user ? (
+            <button onClick={handleLogout}>Logout</button>
+          ) : (
+            <Link to="/login">Login</Link>
+          )}
+        </li>
+      </ul>
     </nav>
   );
 }
