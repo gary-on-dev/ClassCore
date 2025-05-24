@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../components/Auth';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom'; // Added for redirect
-import '../styles.css';
+import { useNavigate } from 'react-router-dom';
+import '../styles/Admin.css';
 
 function Admin() {
   const { user, logout } = useContext(AuthContext);
-  const navigate = useNavigate(); // Added for redirect
+  const navigate = useNavigate();
   const [userEmail, setUserEmail] = useState('');
   const [userPassword, setUserPassword] = useState('');
   const [userRole, setUserRole] = useState('teacher');
@@ -41,14 +41,15 @@ function Admin() {
         setAnnouncements(response.data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
       } catch (error) {
         console.error('Fetch announcements error:', error);
-        setError(error.response?.data?.error || error.message || 'Failed to load announcements');
         if (error.response?.status === 401) {
           setError('Session expired. Redirecting to login...');
-          localStorage.removeItem('token'); // Clear expired token
+          localStorage.removeItem('token');
           setTimeout(() => {
             logout();
             navigate('/login');
           }, 2000);
+        } else {
+          setError(error.response?.data?.error || error.message || 'Failed to load announcements');
         }
       } finally {
         setLoading(false);
@@ -60,7 +61,7 @@ function Admin() {
       setError('Access denied: Admins only');
       setLoading(false);
     }
-  }, [user, logout, navigate]);
+  }, [user, navigate, logout]);
 
   const handleUserInputChange = (e) => {
     const { name, value } = e.target;
@@ -76,7 +77,18 @@ function Admin() {
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
-    if (!file) return;
+    if (!file) {
+      setError('No file selected');
+      return;
+    }
+    if (!['image/jpeg', 'image/png'].includes(file.type)) {
+      setError('Only JPEG or PNG images are allowed');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError('File size exceeds 5MB limit');
+      return;
+    }
 
     try {
       setError('');
@@ -89,6 +101,11 @@ function Admin() {
       }
       const formData = new FormData();
       formData.append('image', file);
+
+      // Log FormData for debugging
+      for (let pair of formData.entries()) {
+        console.log(`${pair[0]}: ${pair[1]}`);
+      }
 
       const response = await axios.post(
         'http://localhost:5000/api/upload-image',
@@ -104,15 +121,9 @@ function Admin() {
       setAnnouncementForm({ ...announcementForm, image: response.data.url });
     } catch (error) {
       console.error('Image upload error:', error);
-      setError('Failed to upload image: ' + (error.response?.data?.error || error.message));
-      if (error.response?.status === 401) {
-        setError('Session expired. Redirecting to login...');
-        localStorage.removeItem('token');
-        setTimeout(() => {
-          logout();
-          navigate('/login');
-        }, 2000);
-      }
+      setError(
+        error.response?.data?.error || error.response?.data?.details || error.message || 'Failed to upload image'
+      );
     }
   };
 
@@ -142,7 +153,6 @@ function Admin() {
       setUserRole('teacher');
     } catch (error) {
       console.error('Add user error:', error.response?.data, error);
-      setError(error.response?.data?.error || error.response?.data?.details || error.message || 'Failed to add user');
       if (error.response?.status === 401) {
         setError('Session expired. Redirecting to login...');
         localStorage.removeItem('token');
@@ -150,6 +160,8 @@ function Admin() {
           logout();
           navigate('/login');
         }, 2000);
+      } else {
+        setError(error.response?.data?.error || error.response?.data?.details || error.message || 'Failed to add user');
       }
     }
   };
@@ -169,8 +181,10 @@ function Admin() {
         ...announcementForm,
         school: user?.school || '6826c6741e8bb0ac59a1bea9',
       };
+      console.log('Announcement payload:', payload);
+      let response;
       if (editingId) {
-        const response = await axios.put(
+        response = await axios.put(
           `http://localhost:5000/api/announcements/${editingId}`,
           payload,
           { headers: { Authorization: `Bearer ${token}` } }
@@ -183,7 +197,7 @@ function Admin() {
         );
         setEditingId(null);
       } else {
-        const response = await axios.post(
+        response = await axios.post(
           'http://localhost:5000/api/announcements',
           payload,
           { headers: { Authorization: `Bearer ${token}` } }
@@ -197,7 +211,6 @@ function Admin() {
       setAnnouncementForm({ title: '', content: '', image: '', category: 'announcement' });
     } catch (error) {
       console.error('Announcement error:', error.response?.data, error);
-      setError(error.response?.data?.error || error.response?.data?.details || error.message || 'Failed to save announcement');
       if (error.response?.status === 401) {
         setError('Session expired. Redirecting to login...');
         localStorage.removeItem('token');
@@ -205,6 +218,8 @@ function Admin() {
           logout();
           navigate('/login');
         }, 2000);
+      } else {
+        setError(error.response?.data?.error || error.response?.data?.details || error.message || 'Failed to save announcement');
       }
     }
   };
@@ -236,7 +251,6 @@ function Admin() {
       alert('Announcement deleted successfully');
     } catch (error) {
       console.error('Delete announcement error:', error.response?.data, error);
-      setError(error.response?.data?.error || error.response?.data?.details || error.message || 'Failed to delete announcement');
       if (error.response?.status === 401) {
         setError('Session expired. Redirecting to login...');
         localStorage.removeItem('token');
@@ -244,6 +258,8 @@ function Admin() {
           logout();
           navigate('/login');
         }, 2000);
+      } else {
+        setError(error.response?.data?.error || error.response?.data?.details || error.message || 'Failed to delete announcement');
       }
     }
   };
@@ -333,7 +349,7 @@ function Admin() {
               type="file"
               id="image"
               name="image"
-              accept="image/*"
+              accept="image/jpeg,image/png"
               onChange={handleImageUpload}
             />
             {announcementForm.image && (
@@ -378,24 +394,38 @@ function Admin() {
       ) : (
         <div className="admin-announcements">
           <h3>Existing Announcements</h3>
-          {announcements.map((announcement) => (
-            <div key={announcement._id} className="announcement-card">
-              <h4>{announcement.title}</h4>
-              <p>{announcement.content}</p>
-              {announcement.image && (
-                <img src={announcement.image} alt={announcement.title} className="announcement-image" />
-              )}
-              <p>Category: {announcement.category || 'Announcement'}</p>
-              <p>Posted: {new Date(announcement.createdAt).toLocaleDateString()}</p>
-              <button onClick={() => handleEdit(announcement)}>Edit</button>
-              <button
-                className="delete-button"
-                onClick={() => handleDelete(announcement._id)}
-              >
-                Delete
-              </button>
-            </div>
-          ))}
+          <div className="admin-announcement-grid">
+            {announcements.map((announcement) => (
+              <div key={announcement._id} className="admin-announcement-card">
+                {announcement.image && (
+                  <img
+                    src={announcement.image}
+                    alt={announcement.title}
+                    className="admin-card-image"
+                  />
+                )}
+                <div className="admin-card-content">
+                  <h4>{announcement.title}</h4>
+                  <p className="admin-card-summary">{announcement.content}</p>
+                  <span className={`category-tag ${announcement.category}`}>
+                    {announcement.category || 'Announcement'}
+                  </span>
+                  <p className="admin-post-date">
+                    Posted: {new Date(announcement.createdAt).toLocaleDateString()}
+                  </p>
+                  <div className="admin-card-actions">
+                    <button onClick={() => handleEdit(announcement)}>Edit</button>
+                    <button
+                      className="delete-button"
+                      onClick={() => handleDelete(announcement._id)}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>

@@ -10,7 +10,19 @@ const cloudinary = require('cloudinary').v2;
 const multer = require('multer');
 
 const app = express();
-const upload = multer({ storage: multer.memoryStorage() });
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  fileFilter: (req, file, cb) => {
+    const filetypes = /jpeg|jpg|png/;
+    const mimetype = filetypes.test(file.mimetype);
+    if (mimetype) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only JPEG or PNG images are allowed'));
+    }
+  },
+});
 
 app.use(cors({
   origin: 'http://localhost:3000',
@@ -41,7 +53,7 @@ const connectToMongoDB = async () => {
 };
 connectToMongoDB();
 
-// Middleware to verify JWT and role
+// Middleware to verify JWT
 const authMiddleware = (req, res, next) => {
   const token = req.headers.authorization?.split(' ')[1];
   console.log('authMiddleware: Received token:', token ? token.slice(0, 10) + '...' : 'None');
@@ -75,8 +87,8 @@ app.post('/api/users', authMiddleware, adminMiddleware, async (req, res) => {
   try {
     const { email, password, role, school } = req.body;
     console.log('Adding user:', { email, role, school });
-    if (!mongoose.Types.ObjectId.isValid(school)) {
-      return res.status(400).json({ error: 'Invalid school ID' });
+    if (!email || !password || !role || !school) {
+      return res.status(400).json({ error: 'Missing required fields' });
     }
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = new User({ email, password: hashedPassword, role, school });
@@ -101,10 +113,13 @@ app.post('/api/login', async (req, res) => {
     const token = jwt.sign(
       { userId: user._id, email: user.email, role: user.role, school: user.school },
       'secret',
-      { expiresIn: '24h' } // Extended to 24 hours
+      { expiresIn: '24h' }
     );
     console.log('Login successful:', { email, role: user.role, token: token.slice(0, 10) + '...' });
-    res.json({ token, user: { userId: user._id, email: user.email, role: user.role, school: user.school } });
+    res.json({
+      token,
+      user: { userId: user._id, email: user.email, role: user.role, school: user.school },
+    });
   } catch (error) {
     console.error('Login error:', error.message, error.stack);
     res.status(500).json({ error: 'Server error', details: error.message });
@@ -116,8 +131,8 @@ app.post('/api/announcements', authMiddleware, adminMiddleware, async (req, res)
   try {
     const { title, content, school, image, category } = req.body;
     console.log('Creating announcement:', { title, school, category });
-    if (!mongoose.Types.ObjectId.isValid(school)) {
-      return res.status(400).json({ error: 'Invalid school ID' });
+    if (!title || !content || !school) {
+      return res.status(400).json({ error: 'Missing required fields: title, content, school' });
     }
     const announcement = new Announcement({
       title,
@@ -136,11 +151,14 @@ app.post('/api/announcements', authMiddleware, adminMiddleware, async (req, res)
   }
 });
 
-app.get('/api/announcements', authMiddleware, async (req, res) => {
+app.get('/api/announcements', async (req, res) => {
   try {
     const { school } = req.query;
     console.log('Fetching announcements:', { school });
-    const announcements = await Announcement.find();
+    if (!school) {
+      return res.status(400).json({ error: 'School ID required' });
+    }
+    const announcements = await Announcement.find({ school });
     console.log('Announcements fetched:', announcements.length, announcements);
     res.status(200).json(announcements);
   } catch (error) {
@@ -157,8 +175,8 @@ app.put('/api/announcements/:id', authMiddleware, adminMiddleware, async (req, r
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ error: 'Invalid announcement ID' });
     }
-    if (!mongoose.Types.ObjectId.isValid(school)) {
-      return res.status(400).json({ error: 'Invalid school ID' });
+    if (!title || !content || !school) {
+      return res.status(400).json({ error: 'Missing required fields: title, content, school' });
     }
     const announcement = await Announcement.findByIdAndUpdate(
       id,
@@ -190,7 +208,7 @@ app.delete('/api/announcements/:id', authMiddleware, adminMiddleware, async (req
     console.log('Announcement deleted:', announcement);
     res.status(200).json({ message: 'Announcement deleted successfully' });
   } catch (error) {
-    console.error('Create announcement error:', error.message, error.stack);
+    console.error('Delete announcement error:', error.message, error.stack);
     res.status(500).json({ error: 'Server error', details: error.message });
   }
 });
@@ -215,7 +233,7 @@ app.post('/api/upload-image', authMiddleware, adminMiddleware, upload.single('im
     res.status(200).json({ url: result.secure_url });
   } catch (error) {
     console.error('Image upload error:', error.message, error.stack);
-    res.status(500).json({ error: 'Failed to upload image', details: error.message });
+    res.status(400).json({ error: 'Failed to upload image', details: error.message });
   }
 });
 
